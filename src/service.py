@@ -25,3 +25,13 @@ def add_item(item_data):
         "quantity": item_data.quantity,
         "price": item_data.price
     }
+
+def view_inventory():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM items")
+    items = cursor.fetchall()
+    conn.close()
+
+    return [dict(item) for item in items]
