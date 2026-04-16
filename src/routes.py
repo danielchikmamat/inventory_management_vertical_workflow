@@ -6,6 +6,11 @@ from src.service import add_item, remove_item, view_inventory
 
 router = APIRouter()
 
+@router.get("/")
+def read_root():
+    return {"message": "Welcome to the Inventory Management API"}
+
+
 @router.post("/items/")
 def create_item(item: Item):
     return add_item(item)
