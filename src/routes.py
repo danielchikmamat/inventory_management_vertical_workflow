@@ -3,6 +3,8 @@
 from src.schemas import Item
 from fastapi import APIRouter
 from src.service import add_item, get_item_by_id, remove_item, view_inventory
+from fastapi import HTTPException, Response
+
 
 router = APIRouter()
 
@@ -18,7 +20,11 @@ def create_item(item: Item):
 
 @router.get("/items/")
 def get_items():
+    items = view_inventory()
+    if items is None:
+        raise HTTPException(status_code=404, detail="No items found")
     return view_inventory()
+
 
 @router.get("/items/{item_id}")
 def fetch_item_by_id(item_id: int):
@@ -26,11 +32,12 @@ def fetch_item_by_id(item_id: int):
     if item:
         return item
     else:
-        return {"error": "Item not found"}
-
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.delete("/items/{item_id}")
 def delete_item(item_id: int):
-    return remove_item(item_id)
-
+    item = get_item_by_id(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return Response(status_code=204)

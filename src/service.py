@@ -1,23 +1,10 @@
 """ business logic for inventory management system """
 
 from src.db import get_db_connection
-
+from src.repository import insert_data
 
 def add_item(item_data):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        INSERT INTO items (name, quantity, price)
-        VALUES (?, ?, ?)
-        """,
-        (item_data.name, item_data.quantity, item_data.price)
-    )
-
-    conn.commit()
-    item_id = cursor.lastrowid
-    conn.close()
+    item_id = insert_data(item_data.name, item_data.quantity, item_data.price)
 
     return {
         "id": item_id,
@@ -33,6 +20,8 @@ def view_inventory():
     cursor.execute("SELECT * FROM items")
     items = cursor.fetchall()
     conn.close()
+    if not items:
+        return []
 
     return [dict(item) for item in items]
 
@@ -58,10 +47,11 @@ def remove_item(item_id):
     item = get_item_by_id(item_id)
     if not item:
         conn.close()
-        return {"error": "Item not found"}
+        return None
 
     cursor.execute("DELETE FROM items WHERE id = ?", (item_id,))
     conn.commit()
+
     conn.close()
 
-    return {"message": f"Item with id {item_id} has been removed."}
+    return True
