@@ -37,9 +37,28 @@ def view_inventory():
     return [dict(item) for item in items]
 
 
+def get_item_by_id(item_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM items WHERE id = ?", (item_id,))
+    item = cursor.fetchone()
+    conn.close()
+
+    if item:
+        return dict(item)
+    else:
+        return None
+
+
 def remove_item(item_id):
     conn = get_db_connection()
     cursor = conn.cursor()
+
+    item = get_item_by_id(item_id)
+    if not item:
+        conn.close()
+        return {"error": "Item not found"}
 
     cursor.execute("DELETE FROM items WHERE id = ?", (item_id,))
     conn.commit()
