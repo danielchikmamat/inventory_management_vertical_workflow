@@ -35,3 +35,14 @@ def view_inventory():
     conn.close()
 
     return [dict(item) for item in items]
+
+
+def remove_item(item_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM items WHERE id = ?", (item_id,))
+    conn.commit()
+    conn.close()
+
+    return {"message": f"Item with id {item_id} has been removed."}

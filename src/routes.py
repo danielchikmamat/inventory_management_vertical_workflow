@@ -2,7 +2,7 @@
 
 from src.schemas import Item
 from fastapi import APIRouter
-from src.service import add_item, view_inventory
+from src.service import add_item, remove_item, view_inventory
 
 router = APIRouter()
 
@@ -13,5 +13,9 @@ def create_item(item: Item):
 
 @router.get("/items/")
 def get_items():
-    # logic to read items from the database
     return view_inventory()
+
+
+@router.delete("/items/{item_id}")
+def delete_item(item_id: int):
+    return remove_item(item_id)
