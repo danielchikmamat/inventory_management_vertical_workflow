@@ -22,15 +22,33 @@ def insert_data(name, quantity, price):
     return item_id
 
 
-def get_all_items():
+def fetch_items_filtered(
+
+        threshold = None,
+        # add more filters here as needed
+):
+    """ default to fetching all items if no filters provided """
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM items")
-    items = cursor.fetchall()
+    query = "SELECT * FROM items"
+    conditions = []
+    params = []
+
+    if threshold is not None:
+        conditions.append("quantity < ?")
+        params.append(threshold)
+    # add more conditions here as needed
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    cursor.execute(query, tuple(params))
+    rows = cursor.fetchall()
     conn.close()
 
-    return [dict(item) for item in items]
+    return [dict(row) for row in rows]
+
 
 def get_item_by_id(item_id):
     conn = get_db_connection()
@@ -52,14 +70,3 @@ def delete_item(item_id):
     conn.commit()
     conn.close()
     return deleted
-
-
-def find_low_stock_items(threshold):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM items WHERE quantity < ?", (threshold,))
-    items = cursor.fetchall()
-    conn.close()
-
-    return [dict(item) for item in items]
