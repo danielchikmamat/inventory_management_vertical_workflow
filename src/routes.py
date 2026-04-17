@@ -2,7 +2,7 @@
 
 from src.schemas import Item
 from fastapi import APIRouter
-from src.service import add_item, get_item_by_id, get_low_stock_items, remove_item, view_inventory
+from src.service import add_item, get_item_by_id, get_items_filtered, get_low_stock_items, remove_item, view_inventory
 from fastapi import HTTPException, Response
 
 
@@ -19,15 +19,11 @@ def create_item(item: Item):
 
 
 @router.get("/items/")
-def get_items():
-    items = view_inventory()
-    return items
-
-
-@router.get("/items/low-stock")
-def low_stock_items(threshold: int):
-    items = get_low_stock_items(threshold)
-    return items
+def get_items(
+    threshold: int | None = None
+    # add more filters here as needed
+    ):
+    return get_items_filtered(threshold)
 
 
 @router.get("/items/{item_id}")
