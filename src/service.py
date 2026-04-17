@@ -1,6 +1,6 @@
 """ business logic for inventory management system """
 
-from src.repository import delete_item, get_all_items, get_item_by_id, insert_data
+from src.repository import delete_item, find_low_stock_items, get_all_items, get_item_by_id, insert_data
 
 def add_item(item_data):
     item_id = insert_data(item_data.name, item_data.quantity, item_data.price)
@@ -27,3 +27,10 @@ def fetch_item_by_id(item_id):
 
 def remove_item(item_id):
     return delete_item(item_id)
+
+def get_low_stock_items(threshold):
+    items = find_low_stock_items(threshold)
+    return {
+        "count": len(items),
+        "items": items
+    }

@@ -52,3 +52,14 @@ def delete_item(item_id):
     conn.commit()
     conn.close()
     return deleted
+
+
+def find_low_stock_items(threshold):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM items WHERE quantity < ?", (threshold,))
+    items = cursor.fetchall()
+    conn.close()
+
+    return [dict(item) for item in items]
