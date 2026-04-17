@@ -2,7 +2,7 @@
 
 from src.schemas import Item
 from fastapi import APIRouter
-from src.service import add_item, get_item_by_id, remove_item, view_inventory
+from src.service import add_item, get_item_by_id, get_low_stock_items, remove_item, view_inventory
 from fastapi import HTTPException, Response
 
 
@@ -24,6 +24,12 @@ def get_items():
     return items
 
 
+@router.get("/items/low-stock")
+def low_stock_items(threshold: int):
+    items = get_low_stock_items(threshold)
+    return items
+
+
 @router.get("/items/{item_id}")
 def fetch_item_by_id(item_id: int):
     item = get_item_by_id(item_id)
@@ -38,3 +44,5 @@ def delete_item(item_id: int):
     if not success:
         raise HTTPException(status_code=404, detail="Item not found")
     return Response(status_code=204)
+
+
