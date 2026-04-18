@@ -1,28 +1,28 @@
 """ Repository for handling database operations """
 
-from src.db import get_db_connection
+from src.db.connection import get_db_connection
 
 
-def insert_data(name, quantity, price):
+def add_data(name, quantity, price):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO items (name, quantity, price)
+            VALUES (?, ?, ?)
+            """,
+            (name, quantity, price)
+        )
 
-    cursor.execute(
-        """
-        INSERT INTO items (name, quantity, price)
-        VALUES (?, ?, ?)
-        """,
-        (name, quantity, price)
-    )
-
-    conn.commit()
-    item_id = cursor.lastrowid
-    conn.close()
-
-    return item_id
+        conn.commit()
+        item_id = cursor.lastrowid
+        return item_id
+    finally:
+        conn.close()
 
 
-def fetch_items_filtered(
+def get_items_filtered(
 
         threshold = None,
         min_price = None,
@@ -71,7 +71,7 @@ def get_item_by_id(item_id):
     return dict(item) if item else None
 
 
-def update_item_by_id(item_id, name=None, quantity=None, price=None):
+def update_item(item_id, name=None, quantity=None, price=None):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -111,7 +111,7 @@ def delete_item(item_id):
     return deleted
 
 
-def calculate_stock_value():
+def stock_value():
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -120,3 +120,18 @@ def calculate_stock_value():
     conn.close()
 
     return result["stock_value"] if result else 0
+
+
+def item_name_exists(name: str) -> bool:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT 1 FROM items WHERE name = ? LIMIT 1",
+        (name,)
+    )
+
+    exists = cursor.fetchone() is not None
+
+    conn.close()
+    return exists

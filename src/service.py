@@ -1,6 +1,8 @@
 """ business logic for inventory management system """
 
-from src.repository import delete_item, get_item_by_id, insert_data, fetch_items_filtered, calculate_stock_value, update_item_by_id
+import src.repository as repo
+from src.exceptions import ItemNotFoundError, DuplicateItemError
+import sqlite3 as sqlite3
 
 def get_items_filtered(
     threshold = None,
@@ -8,12 +10,14 @@ def get_items_filtered(
     max_price = None
     # add more filters here as needed
 ):
-    return fetch_items_filtered(threshold, min_price, max_price)
+    return repo.get_items_filtered(threshold, min_price, max_price)
 
 
 def add_item(item_data):
-    item_id = insert_data(item_data.name, item_data.quantity, item_data.price)
-
+    try:
+        item_id = repo.add_data(item_data.name, item_data.quantity, item_data.price)
+    except sqlite3.IntegrityError:
+        raise DuplicateItemError("item already exists")
     return {
         "id": item_id,
         "name": item_data.name,
@@ -22,23 +26,32 @@ def add_item(item_data):
     }
 
 
-def fetch_item_by_id(item_id):
-    return get_item_by_id(item_id)
+def get_item_by_id(item_id):
+    item = repo.get_item_by_id(item_id)
+    if item is None:
+        raise ItemNotFoundError(f"Item {item_id} not found")
+    return item
 
 
 def update_item(item_id, item_update):
     # Implementation for updating an item
-    existing_item = get_item_by_id(item_id)
-    if not existing_item:
-        return False
-    updated = update_item_by_id(item_id, name=item_update.name, quantity=item_update.quantity, price=item_update.price)
+
+    get_item_by_id(item_id) #ensures items exist, raises exception
+    if repo.item_name_exists(item_update.name):
+        raise DuplicateItemError(f"Name {update_item.name} already exists ")
+
+    updated = repo.update_item(item_id,
+        name=item_update.name,
+        quantity=item_update.quantity,
+        price=item_update.price)
     return updated
 
 
-def remove_item(item_id):
-    return delete_item(item_id)
+def delete_item(item_id):
+    return repo.delete_item(item_id)
 
 
 def stock_value():
-    total_value = calculate_stock_value()
+    total_value = repo.stock_value()
     return {"total_stock_value": total_value}
+
