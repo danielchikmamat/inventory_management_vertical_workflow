@@ -25,6 +25,8 @@ def insert_data(name, quantity, price):
 def fetch_items_filtered(
 
         threshold = None,
+        min_price = None,
+        max_price = None
         # add more filters here as needed
 ):
     """ default to fetching all items if no filters provided """
@@ -38,6 +40,14 @@ def fetch_items_filtered(
     if threshold is not None:
         conditions.append("quantity < ?")
         params.append(threshold)
+
+    if min_price is not None:
+        conditions.append("price >= ?")
+        params.append(min_price)
+
+    if max_price is not None:
+        conditions.append("price <= ?")
+        params.append(max_price)
     # add more conditions here as needed
 
     if conditions:
