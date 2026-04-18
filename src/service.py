@@ -1,6 +1,6 @@
 """ business logic for inventory management system """
 
-from src.repository import delete_item, get_item_by_id, insert_data, fetch_items_filtered, calculate_stock_value
+from src.repository import delete_item, get_item_by_id, insert_data, fetch_items_filtered, calculate_stock_value, update_item_by_id
 
 def get_items_filtered(
     threshold: int = None,
@@ -22,6 +22,15 @@ def add_item(item_data):
 
 def fetch_item_by_id(item_id):
     return get_item_by_id(item_id)
+
+
+def update_item(item_id, item_update):
+    # Implementation for updating an item
+    existing_item = get_item_by_id(item_id)
+    if not existing_item:
+        return False
+    updated = update_item_by_id(item_id, name=item_update.name, quantity=item_update.quantity, price=item_update.price)
+    return updated
 
 
 def remove_item(item_id):
