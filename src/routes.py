@@ -2,7 +2,7 @@
 
 from src.schemas import Item
 from fastapi import APIRouter
-from src.service import add_item, get_item_by_id, get_items_filtered, remove_item
+from src.service import add_item, get_item_by_id, get_items_filtered, remove_item, stock_value
 from fastapi import HTTPException, Response
 
 
@@ -24,6 +24,10 @@ def get_items(
     # add more filters here as needed
     ):
     return get_items_filtered(threshold)
+
+@router.get("/items/metrics/stock-value")
+def get_stock_value():
+    return stock_value()
 
 
 @router.get("/items/{item_id}")

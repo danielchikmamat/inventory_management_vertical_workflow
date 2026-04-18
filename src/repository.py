@@ -70,3 +70,14 @@ def delete_item(item_id):
     conn.commit()
     conn.close()
     return deleted
+
+
+def calculate_stock_value():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT SUM(quantity * price) AS stock_value FROM items")
+    result = cursor.fetchone()
+    conn.close()
+
+    return result["stock_value"] if result else 0
