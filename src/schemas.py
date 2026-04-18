@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 class Item(BaseModel):
-    name: str
+    name: str = Field(min_length=1, max_length=100)
     price: float = Field(ge=0)
     quantity: int = Field(ge=0)
 
