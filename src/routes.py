@@ -2,7 +2,7 @@
 
 from src.schemas import Item
 from fastapi import APIRouter
-from src.service import add_item, get_item_by_id, get_items_filtered, get_low_stock_items, remove_item, view_inventory
+from src.service import add_item, get_item_by_id, get_items_filtered, remove_item
 from fastapi import HTTPException, Response
 
 
