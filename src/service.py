@@ -1,6 +1,6 @@
 """ business logic for inventory management system """
 
-from src.repository import delete_item, get_item_by_id, insert_data, fetch_items_filtered
+from src.repository import delete_item, get_item_by_id, insert_data, fetch_items_filtered, calculate_stock_value
 
 def get_items_filtered(
     threshold: int = None,
@@ -27,3 +27,7 @@ def fetch_item_by_id(item_id):
 def remove_item(item_id):
     return delete_item(item_id)
 
+
+def stock_value():
+    total_value = calculate_stock_value()
+    return {"total_stock_value": total_value}
