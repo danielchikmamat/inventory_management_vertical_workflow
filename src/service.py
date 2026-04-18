@@ -3,10 +3,12 @@
 from src.repository import delete_item, get_item_by_id, insert_data, fetch_items_filtered, calculate_stock_value, update_item_by_id
 
 def get_items_filtered(
-    threshold: int = None,
+    threshold = None,
+    min_price = None,
+    max_price = None
     # add more filters here as needed
 ):
-    return fetch_items_filtered(threshold)
+    return fetch_items_filtered(threshold, min_price, max_price)
 
 
 def add_item(item_data):

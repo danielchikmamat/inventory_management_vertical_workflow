@@ -20,10 +20,12 @@ def create_item(item: Item):
 
 @router.get("/items/")
 def get_items(
-    threshold: int | None = None
+    threshold: int | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
     # add more filters here as needed
     ):
-    return get_items_filtered(threshold)
+    return get_items_filtered(threshold, min_price, max_price)
 
 
 @router.get("/items/metrics/stock-value")
