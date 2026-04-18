@@ -61,6 +61,35 @@ def get_item_by_id(item_id):
     return dict(item) if item else None
 
 
+def update_item_by_id(item_id, name=None, quantity=None, price=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    fields = []
+    params = []
+
+    if name is not None:
+        fields.append("name = ?")
+        params.append(name)
+    if quantity is not None:
+        fields.append("quantity = ?")
+        params.append(quantity)
+    if price is not None:
+        fields.append("price = ?")
+        params.append(price)
+
+    if not fields:
+        return False  # No fields to update
+
+    params.append(item_id)
+    query = f"UPDATE items SET {', '.join(fields)} WHERE id = ?"
+    cursor.execute(query, tuple(params))
+    updated = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
+
+
 def delete_item(item_id):
     conn = get_db_connection()
     cursor = conn.cursor()

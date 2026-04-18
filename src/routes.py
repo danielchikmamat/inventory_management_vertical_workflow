@@ -1,8 +1,8 @@
 """ api endpoints for inventory management system """
 
-from src.schemas import Item
+from src.schemas import Item, ItemUpdate
 from fastapi import APIRouter
-from src.service import add_item, get_item_by_id, get_items_filtered, remove_item, stock_value
+from src.service import add_item, get_item_by_id, get_items_filtered, remove_item, stock_value, update_item
 from fastapi import HTTPException, Response
 
 
@@ -25,6 +25,7 @@ def get_items(
     ):
     return get_items_filtered(threshold)
 
+
 @router.get("/items/metrics/stock-value")
 def get_stock_value():
     return stock_value()
@@ -36,6 +37,12 @@ def fetch_item_by_id(item_id: int):
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
+
+
+@router.put("/items/{item_id}")
+def put_update_item(item_id: int, item_update: ItemUpdate):
+    # Implementation for updating an item
+    return update_item(item_id, item_update)
 
 
 @router.delete("/items/{item_id}")
