@@ -38,7 +38,7 @@ def update_item(item_id, item_update):
 
     get_item_by_id(item_id) #ensures items exist, raises exception
     if repo.item_name_exists(item_update.name):
-        raise DuplicateItemError(f"Name {update_item.name} already exists ")
+        raise DuplicateItemError(f"Name {item_update.name} already exists ")
 
     updated = repo.update_item(item_id,
         name=item_update.name,
