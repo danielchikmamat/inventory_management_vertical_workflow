@@ -16,9 +16,9 @@ def read_root():
 
 
 @router.post("/items/", status_code=201)
-def create_item(item: Item, conn=Depends(get_db_connection)):
+def create_item(item: Item):
     try:
-        return service.add_item(conn, item)
+        return service.add_item(item)
     except DuplicateItemError as e:
         raise HTTPException(status_code=409, detail=str(e))
 
@@ -29,15 +29,14 @@ def get_items(
     threshold: int | None = None,
     min_price: float | None = None,
     max_price: float | None = None,
-    conn=Depends(get_db_connection)
     # add more filters here as needed
     ):
-    return service.get_items_filtered(conn, threshold, min_price, max_price)
+    return service.get_items_filtered(threshold, min_price, max_price)
 
 
 @router.get("/items/metrics/stock-value")
-def get_stock_value(conn=Depends(get_db_connection)):
-    return service.stock_value(conn)
+def get_stock_value():
+    return service.stock_value()
 
 
 @router.get("/items/{item_id}")
@@ -49,17 +48,17 @@ def fetch_item_by_id(item_id: int, conn=Depends(get_db_connection)):
 
 
 @router.put("/items/{item_id}")
-def put_update_item(item_id: int, item_update: ItemUpdate, conn=Depends(get_db_connection)):
+def put_update_item(item_id: int, item_update: ItemUpdate):
     # Implementation for updating an item
     try:
-        return service.update_item(conn, item_id, item_update)
+        return service.update_item(item_id, item_update)
     except ItemNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.delete("/items/{item_id}")
-def delete_item(item_id: int, conn=Depends(get_db_connection)):
-    success = service.remove_item(conn, item_id)
+def delete_item(item_id: int):
+    success = service.remove_item(item_id)
     if not success:
         raise HTTPException(status_code=404, detail="Item not found")
     return Response(status_code=204)
