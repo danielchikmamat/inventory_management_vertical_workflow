@@ -26,3 +26,9 @@ Client → Pydantic → Router → Service → Repository → DB
 - return [] or 404?
 - what does update return?
 - do deletes return body or just status
+
+## clean architecture pass
+- router -> no SQL
+- service -> no SQL
+- repository -> no HTTP logic
+- DB layer -> only connection handling
