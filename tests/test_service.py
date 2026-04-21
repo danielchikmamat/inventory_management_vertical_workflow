@@ -4,8 +4,9 @@ Repository is mocked so no DB is required.
 """
 import sqlite3
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, ANY
 from types import SimpleNamespace
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -37,7 +38,7 @@ class TestGetItemsFiltered:
             mock_repo.get_items_filtered.return_value = items
             from src.service import get_items_filtered
             result = get_items_filtered()
-        mock_repo.get_items_filtered.assert_called_once_with(None, None, None)
+        mock_repo.get_items_filtered.assert_called_once_with(ANY, None, None, None)
         assert result == items
 
     def test_threshold_filter_forwarded(self):
@@ -45,21 +46,21 @@ class TestGetItemsFiltered:
             mock_repo.get_items_filtered.return_value = []
             from src.service import get_items_filtered
             get_items_filtered(threshold=5)
-        mock_repo.get_items_filtered.assert_called_once_with(5, None, None)
+        mock_repo.get_items_filtered.assert_called_once_with(ANY, 5, None, None)
 
     def test_price_range_filter_forwarded(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = []
             from src.service import get_items_filtered
             get_items_filtered(min_price=1.0, max_price=50.0)
-        mock_repo.get_items_filtered.assert_called_once_with(None, 1.0, 50.0)
+        mock_repo.get_items_filtered.assert_called_once_with(ANY, None, 1.0, 50.0)
 
     def test_all_filters_forwarded(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = []
             from src.service import get_items_filtered
             get_items_filtered(threshold=3, min_price=2.0, max_price=100.0)
-        mock_repo.get_items_filtered.assert_called_once_with(3, 2.0, 100.0)
+        mock_repo.get_items_filtered.assert_called_once_with(ANY, 3, 2.0, 100.0)
 
     def test_returns_empty_list_when_no_matches(self):
         with patch(REPO) as mock_repo:
@@ -89,7 +90,7 @@ class TestAddItem:
             mock_repo.add_data.return_value = 7
             from src.service import add_item
             add_item(item_data)
-        mock_repo.add_data.assert_called_once_with("Bolt", 100, 0.05)
+        mock_repo.add_data.assert_called_once_with(ANY, "Bolt", 100, 0.05)
 
     def test_raises_duplicate_error_on_integrity_error(self):
         from src.exceptions import DuplicateItemError
@@ -144,7 +145,7 @@ class TestGetItemById:
             mock_repo.get_item_by_id.return_value = make_db_item()
             from src.service import get_item_by_id
             get_item_by_id(7)
-        mock_repo.get_item_by_id.assert_called_once_with(7)
+        mock_repo.get_item_by_id.assert_called_once_with(ANY, 7)
 
 
 # ===========================================================================
@@ -191,7 +192,7 @@ class TestUpdateItem:
             from src.service import update_item
             update_item(1, item_update)
         mock_repo.update_item.assert_called_once_with(
-            1, name="New Name", quantity=5, price=3.50
+            ANY, 1, name="New Name", quantity=5, price=3.50
         )
 
     def test_name_uniqueness_check_is_called(self):
@@ -202,7 +203,7 @@ class TestUpdateItem:
             mock_repo.update_item.return_value = True
             from src.service import update_item
             update_item(1, item_update)
-        mock_repo.item_name_exists.assert_called_once_with("SomeName")
+        mock_repo.item_name_exists.assert_called_once_with(ANY, "SomeName")
 
 
 # ===========================================================================
@@ -228,7 +229,7 @@ class TestDeleteItem:
             mock_repo.delete_item.return_value = True
             from src.service import delete_item
             delete_item(42)
-        mock_repo.delete_item.assert_called_once_with(42)
+        mock_repo.delete_item.assert_called_once_with(ANY,42)
 
 
 # ===========================================================================

@@ -3,7 +3,7 @@
 from src.db.connection import get_db_connection
 
 
-def add_data(conn, name, quantity, price):
+def add_data(conn, name, quantity, price, ):
 
     cursor = conn.cursor()
     cursor.execute(
