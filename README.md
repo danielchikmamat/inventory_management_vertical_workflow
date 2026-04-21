@@ -18,3 +18,11 @@ Client → Pydantic → Router → Service → Repository → DB
 ## sql queries
 - never do this cursor.execute("f"SELECT * FROM items WHERE name = '{name}") SQL injection prone
 - do this cursor.execute("SELECT * FROM items WHERE name = ?", (name,)). name will be treated as data and not parsed as sql code
+
+## Standardize error
+- status code 404 -> not found
+- 409 -> duplicate
+- 422 -> validation (pydantic)
+- return [] or 404?
+- what does update return?
+- do deletes return body or just status
