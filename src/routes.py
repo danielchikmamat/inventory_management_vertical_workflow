@@ -38,7 +38,7 @@ def get_items(
 @router.get("/items/{item_id}")
 def fetch_item_by_id(item_id: int, conn=Depends(get_db_connection)):
     try:
-        return service.get_item(conn, item_id)
+        return service.get_item_by_id(conn, item_id)
     except ItemNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
