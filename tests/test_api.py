@@ -21,7 +21,6 @@ def sample_item():
     return {
         "id": 1,
         "name": "Test Item",
-        "description": "Test Description",
         "price": 99.99,
         "quantity": 10
     }
@@ -34,14 +33,12 @@ def sample_item_list():
         {
             "id": 1,
             "name": "Item 1",
-            "description": "Description 1",
             "price": 10.0,
             "quantity": 5
         },
         {
             "id": 2,
             "name": "Item 2",
-            "description": "Description 2",
             "price": 20.0,
             "quantity": 15
         }
@@ -68,7 +65,6 @@ class TestCreateItem:
 
         item_data = {
             "name": "Test Item",
-            "description": "Test Description",
             "price": 99.99,
             "quantity": 10
         }
@@ -86,7 +82,6 @@ class TestCreateItem:
 
         item_data = {
             "name": "Duplicate Item",
-            "description": "Test Description",
             "price": 50.0,
             "quantity": 5
         }
@@ -323,7 +318,6 @@ class TestEndpointIntegration:
         # Create item
         item_data = {
             "name": f"Integration Test Item",
-            "description": "Test",
             "price": 10.0,
             "quantity": 5
         }
