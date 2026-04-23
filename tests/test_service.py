@@ -44,7 +44,7 @@ class TestGetItemsFiltered:
 
     def test_threshold_filter_forwarded(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = []
+            mock_repo.get_items_filtered.return_value = 404
             from src.service import get_items_filtered
             fake_conn = object()
             get_items_filtered(fake_conn, threshold=5)
@@ -52,7 +52,7 @@ class TestGetItemsFiltered:
 
     def test_price_range_filter_forwarded(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = []
+            mock_repo.get_items_filtered.return_value = 404
             from src.service import get_items_filtered
             fake_conn = object()
             get_items_filtered(fake_conn, min_price=1.0, max_price=50.0)
@@ -60,19 +60,19 @@ class TestGetItemsFiltered:
 
     def test_all_filters_forwarded(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = []
+            mock_repo.get_items_filtered.return_value = 404
             from src.service import get_items_filtered
             fake_conn = object()
             get_items_filtered(fake_conn, threshold=3, min_price=2.0, max_price=100.0)
         mock_repo.get_items_filtered.assert_called_once_with(fake_conn, 3, 2.0, 100.0)
 
-    def test_returns_empty_list_when_no_matches(self):
+    def test_returns_404_when_no_matches(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = []
+            mock_repo.get_items_filtered.return_value = 404
             from src.service import get_items_filtered
             fake_conn = object()
             result = get_items_filtered(fake_conn, threshold=1)
-        assert result == []
+        assert result == 404
 
 
 # ===========================================================================

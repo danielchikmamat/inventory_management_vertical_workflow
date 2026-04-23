@@ -3,7 +3,7 @@
 import src.repository as repo
 from src.exceptions import ItemNotFoundError, DuplicateItemError
 import sqlite3 as sqlite3
-from src.db.connection import get_db_connection
+
 
 def get_items_filtered(
     conn,
@@ -12,9 +12,10 @@ def get_items_filtered(
     max_price = None
     # add more filters here as needed
 ):
-
-    return repo.get_items_filtered(conn, threshold, min_price, max_price)
-
+    items = repo.get_items_filtered(conn, threshold, min_price, max_price)
+    if not items:
+        raise ItemNotFoundError("no items found")
+    return items
 
 def add_item(conn, item_data):
 

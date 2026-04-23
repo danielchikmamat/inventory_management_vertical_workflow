@@ -25,7 +25,7 @@ Client → Pydantic → Router → Service → Repository → DB
 - 422 -> validation (pydantic)
 - return [] or 404?
 - what does update return?
-- do deletes return body or just status
+- do deletes return body or just status. Returns status code 204
 
 ## clean architecture pass
 - router -> no SQL
