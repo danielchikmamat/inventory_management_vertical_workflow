@@ -5,14 +5,23 @@ from unittest.mock import Mock, patch, ANY
 from main import app
 from src.schemas import Item, ItemUpdate
 from src.exceptions import ItemNotFoundError, DuplicateItemError
-
-client = TestClient(app)
+from src.db.connection import get_db_connection
 
 
 @pytest.fixture
-def mock_db_connection():
-    """Fixture to provide a mock database connection"""
-    return Mock()
+def client(test_db):
+    def override_get_db():
+        try:
+            yield test_db
+        finally:
+            pass  # don't close here, fixture handles it
+
+    app.dependency_overrides[get_db_connection] = override_get_db
+
+    with TestClient(app) as c:
+        yield c
+
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -48,7 +57,7 @@ def sample_item_list():
 class TestRootEndpoint:
     """Tests for the root endpoint"""
 
-    def test_read_root(self):
+    def test_read_root(self, client):
         """Test root endpoint returns welcome message"""
         response = client.get("/")
         assert response.status_code == 200
@@ -59,7 +68,7 @@ class TestCreateItem:
     """Tests for POST /items/ endpoint"""
 
     @patch('src.service.add_item')
-    def test_create_item_success(self, mock_add_item, sample_item):
+    def test_create_item_success(self, mock_add_item, client, sample_item):
         """Test successful item creation"""
         mock_add_item.return_value = sample_item
 
@@ -76,7 +85,7 @@ class TestCreateItem:
         mock_add_item.assert_called_once()
 
     @patch('src.service.add_item')
-    def test_create_item_duplicate_error(self, mock_add_item):
+    def test_create_item_duplicate_error(self, mock_add_item, client):
         """Test item creation with duplicate name"""
         mock_add_item.side_effect = DuplicateItemError("Item with this name already exists")
 
@@ -91,7 +100,7 @@ class TestCreateItem:
         assert response.status_code == 409
         assert "already exists" in response.json()["detail"]
 
-    def test_create_item_invalid_data(self):
+    def test_create_item_invalid_data(self, client):
         """Test item creation with invalid data"""
         item_data = {
             "name": "Test",
@@ -107,7 +116,7 @@ class TestGetItems:
     """Tests for GET /items/ endpoint"""
 
     @patch('src.service.get_items_filtered')
-    def test_get_items_no_filters(self, mock_get_items, sample_item_list):
+    def test_get_items_no_filters(self, mock_get_items, client, sample_item_list):
         """Test getting all items without filters"""
         mock_get_items.return_value = sample_item_list
 
@@ -123,7 +132,7 @@ class TestGetItems:
         )
 
     @patch('src.service.get_items_filtered')
-    def test_get_items_with_threshold(self, mock_get_items, sample_item_list):
+    def test_get_items_with_threshold(self, mock_get_items, client, sample_item_list):
         """Test getting items with quantity threshold filter"""
         filtered_items = [sample_item_list[1]]  # Only item with quantity > 10
         mock_get_items.return_value = filtered_items
@@ -140,7 +149,7 @@ class TestGetItems:
         )
 
     @patch('src.service.get_items_filtered')
-    def test_get_items_with_price_range(self, mock_get_items, sample_item_list):
+    def test_get_items_with_price_range(self, mock_get_items, client, sample_item_list):
         """Test getting items with price range filters"""
         mock_get_items.return_value = sample_item_list
 
@@ -155,7 +164,7 @@ class TestGetItems:
         )
 
     @patch('src.service.get_items_filtered')
-    def test_get_items_all_filters(self, mock_get_items):
+    def test_get_items_all_filters(self, mock_get_items, client):
         """Test getting items with all filters applied"""
         mock_get_items.return_value = []
 
@@ -175,7 +184,7 @@ class TestGetItemById:
     """Tests for GET /items/{item_id} endpoint"""
 
     @patch('src.service.get_item_by_id')
-    def test_fetch_item_by_id_success(self, mock_get_item, sample_item):
+    def test_fetch_item_by_id_success(self, mock_get_item, client, sample_item):
         """Test successfully fetching an item by ID"""
         mock_get_item.return_value = sample_item
 
@@ -186,7 +195,7 @@ class TestGetItemById:
         mock_get_item.assert_called_once_with(ANY, 1)
 
     @patch('src.service.get_item_by_id')
-    def test_fetch_item_by_id_not_found(self, mock_get_item):
+    def test_fetch_item_by_id_not_found(self, mock_get_item, client):
         """Test fetching non-existent item"""
         mock_get_item.side_effect = ItemNotFoundError("Item not found")
 
@@ -195,7 +204,7 @@ class TestGetItemById:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    def test_fetch_item_invalid_id(self):
+    def test_fetch_item_invalid_id(self, client):
         """Test fetching item with invalid ID format"""
         response = client.get("/items/invalid")
         assert response.status_code == 422  # Validation error
@@ -205,7 +214,7 @@ class TestUpdateItem:
     """Tests for PUT /items/{item_id} endpoint"""
 
     @patch('src.service.update_item')
-    def test_update_item_success(self, mock_update_item, sample_item):
+    def test_update_item_success(self, mock_update_item, client, sample_item):
         """Test successful item update"""
         updated_item = {**sample_item, "name": "Updated Item", "price": 150.0}
         mock_update_item.return_value = updated_item
@@ -222,7 +231,7 @@ class TestUpdateItem:
         assert response.json()["price"] == 150.0
 
     @patch('src.service.update_item')
-    def test_update_item_not_found(self, mock_update_item):
+    def test_update_item_not_found(self, mock_update_item, client):
         """Test updating non-existent item"""
         mock_update_item.side_effect = ItemNotFoundError("Item not found")
 
@@ -233,7 +242,7 @@ class TestUpdateItem:
         assert "not found" in response.json()["detail"].lower()
 
     @patch('src.service.update_item')
-    def test_update_item_partial(self, mock_update_item, sample_item):
+    def test_update_item_partial(self, mock_update_item, client, sample_item):
         """Test partial item update"""
         updated_item = {**sample_item, "quantity": 20}
         mock_update_item.return_value = updated_item
@@ -244,7 +253,7 @@ class TestUpdateItem:
         assert response.status_code == 200
         assert response.json()["quantity"] == 20
 
-    def test_update_item_invalid_data(self):
+    def test_update_item_invalid_data(self, client):
         """Test updating item with invalid data"""
         update_data = {"price": "invalid"}
         response = client.put("/items/1", json=update_data)
@@ -256,7 +265,7 @@ class TestDeleteItem:
     """Tests for DELETE /items/{item_id} endpoint"""
 
     @patch('src.service.delete_item')
-    def test_delete_item_success(self, mock_delete_item):
+    def test_delete_item_success(self, mock_delete_item, client):
         """Test successful item deletion"""
         mock_delete_item.return_value = True
 
@@ -267,7 +276,7 @@ class TestDeleteItem:
         mock_delete_item.assert_called_once_with(ANY, 1)
 
     @patch('src.service.delete_item')
-    def test_delete_item_not_found(self, mock_delete_item):
+    def test_delete_item_not_found(self, mock_delete_item, client):
         """Test deleting non-existent item"""
         mock_delete_item.return_value = False
 
@@ -276,7 +285,7 @@ class TestDeleteItem:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    def test_delete_item_invalid_id(self):
+    def test_delete_item_invalid_id(self, client):
         """Test deleting item with invalid ID"""
         response = client.delete("/items/invalid")
         assert response.status_code == 422
@@ -286,7 +295,7 @@ class TestStockValueMetrics:
     """Tests for GET /metrics/stock-value endpoint"""
 
     @patch('src.service.stock_value')
-    def test_get_stock_value_success(self, mock_stock_value):
+    def test_get_stock_value_success(self, mock_stock_value, client):
         """Test getting total stock value"""
         mock_stock_value.return_value = {"total_value": 1500.50}
 
@@ -297,7 +306,7 @@ class TestStockValueMetrics:
         mock_stock_value.assert_called_once()
 
     @patch('src.service.stock_value')
-    def test_get_stock_value_empty_inventory(self, mock_stock_value):
+    def test_get_stock_value_empty_inventory(self, mock_stock_value, client):
         """Test getting stock value with no items"""
         mock_stock_value.return_value = {"total_value": 0.0}
 
@@ -312,7 +321,7 @@ class TestEndpointIntegration:
     """Integration tests for endpoints with database"""
 
     @pytest.mark.integration
-    def test_create_and_get_item_flow(self):
+    def test_create_and_get_item_flow(self, client):
         """Test creating an item and then retrieving it"""
         # This would use a test database
         # Create item

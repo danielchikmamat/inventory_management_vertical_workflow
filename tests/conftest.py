@@ -2,17 +2,26 @@
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import Mock
+import os
+import sqlite3 as sqlite3
+from pathlib import Path
 
+os.environ["ENV"] = "test"
 
-@pytest.fixture(autouse=True)
-def mock_db_dependency(monkeypatch):
-    """Automatically mock the database connection dependency for all tests"""
-    mock_conn = Mock()
+@pytest.fixture
+def test_db():
+    """
+    Fresh in-memory SQLite DB for each test.
+    that each try to close it internally.
+    """
+    schema = Path("src/db/schema.sql").read_text()
 
-    def mock_get_db():
-        return mock_conn
+    conn = sqlite3.connect(":memory:", check_same_thread=False)
+    conn.row_factory = sqlite3.Row
 
-    # This prevents the real database connection from being called
-    monkeypatch.setattr("src.db.connection.get_db_connection", mock_get_db)
+    conn.executescript(schema)
+    conn.commit()
 
-    return mock_conn
+    yield conn
+
+    conn.close()
