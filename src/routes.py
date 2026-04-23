@@ -32,7 +32,10 @@ def get_items(
     conn=Depends(get_db_connection)
     # add more filters here as needed
     ):
-    return service.get_items_filtered(conn, threshold, min_price, max_price)
+    try:
+        return service.get_items_filtered(conn, threshold, min_price, max_price)
+    except ItemNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.get("/items/{item_id}")
@@ -47,7 +50,7 @@ def fetch_item_by_id(item_id: int, conn=Depends(get_db_connection)):
 def put_update_item(item_id: int, item_update: ItemUpdate, conn=Depends(get_db_connection)):
     # Implementation for updating an item
     try:
-        return service.update_item(item_id, item_update, conn)
+        return service.update_item(conn, item_id, item_update)
     except ItemNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
