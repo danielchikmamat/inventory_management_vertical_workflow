@@ -5,12 +5,13 @@ get_db_connection is patched to return the test connection for every test.
 import pytest
 import sqlite3
 from unittest.mock import patch
-from src import repository
+import app.repo.repository as repository
 from pathlib import Path
-from src.db.connection import get_db_connection
+from app.db.connection import get_db_connection
+from app.repo.model import UpdateResult
 
 
-DB_CONN = "src.repository.get_db_connection"
+DB_CONN = "app.repo.repository.get_db_connection"
 
 
 # ---------------------------------------------------------------------------
@@ -149,8 +150,8 @@ class TestUpdateItem:
     def test_updates_name(self, seeded_db):
         row = seeded_db.execute("SELECT id FROM items WHERE name='Widget'").fetchone()
         with patch(DB_CONN, return_value=seeded_db):
-            updated = repository.update_item(seeded_db, row["id"], name="Super Widget")
-        assert updated is True
+            result = repository.update_item(seeded_db, row["id"], name="Super Widget")
+        assert result.reason == "ok"
         result = seeded_db.execute("SELECT name FROM items WHERE id=?",
                                    (row["id"],)).fetchone()
         assert result["name"] == "Super Widget"
@@ -171,16 +172,17 @@ class TestUpdateItem:
                                    (row["id"],)).fetchone()
         assert result["price"] == 1.23
 
-    def test_returns_false_when_no_fields_provided(self, seeded_db):
-        row = seeded_db.execute("SELECT id FROM items WHERE name='Widget'").fetchone()
-        with patch(DB_CONN, return_value=seeded_db):
-            result = repository.update_item(seeded_db, row["id"])
-        assert result is False
 
-    def test_returns_false_for_nonexistent_id(self, test_db):
+    def test_for_nonexistent_id(self, test_db):
         with patch(DB_CONN, return_value=test_db):
             result = repository.update_item(test_db, 999, name="Ghost")
-        assert result is False
+        assert result == UpdateResult(0, None, reason="not_found")
+
+    def test_for_name_already_exists(self, seeded_db):
+        row = seeded_db.execute("SELECT id FROM items WHERE name='Widget'").fetchone()
+        with patch(DB_CONN, return_value=seeded_db):
+            result = repository.update_item(seeded_db, row["id"], name="Gadget")
+        assert result == UpdateResult(0, None, reason="conflict")
 
 
 # ===========================================================================

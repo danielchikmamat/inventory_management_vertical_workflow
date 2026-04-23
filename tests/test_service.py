@@ -5,7 +5,8 @@ Repository is mocked so no DB is required.
 import sqlite3
 import pytest
 from unittest.mock import patch
-from types import SimpleNamespace
+from app.schemas import Item
+from app.repo.model import UpdateResult
 
 
 # ---------------------------------------------------------------------------
@@ -13,17 +14,17 @@ from types import SimpleNamespace
 # ---------------------------------------------------------------------------
 
 def make_item_data(name="Widget", quantity=10, price=9.99):
-    return SimpleNamespace(name=name, quantity=quantity, price=price)
+    return Item(name=name, quantity=quantity, price=price)
 
 def make_db_item(id=1, name="Widget", quantity=10, price=9.99):
     return {"id": id, "name": name, "quantity": quantity, "price": price}
 
 
 # ---------------------------------------------------------------------------
-# Patch target – all tests patch 'src.service.repo'
+# Patch target – all tests patch 'app.service.repo'
 # ---------------------------------------------------------------------------
 
-REPO = "src.service.repo"
+REPO = "app.service.repo"
 
 
 # ===========================================================================
@@ -36,7 +37,7 @@ class TestGetItemsFiltered:
         items = [make_db_item(1), make_db_item(2, name="Gadget")]
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = items
-            from src.service import get_items_filtered
+            from app.service import get_items_filtered
             fake_conn = object()
             result = get_items_filtered(fake_conn)
         mock_repo.get_items_filtered.assert_called_once_with(fake_conn, None, None, None)
@@ -45,7 +46,7 @@ class TestGetItemsFiltered:
     def test_threshold_filter_forwarded(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = 404
-            from src.service import get_items_filtered
+            from app.service import get_items_filtered
             fake_conn = object()
             get_items_filtered(fake_conn, threshold=5)
         mock_repo.get_items_filtered.assert_called_once_with(fake_conn, 5, None, None)
@@ -53,7 +54,7 @@ class TestGetItemsFiltered:
     def test_price_range_filter_forwarded(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = 404
-            from src.service import get_items_filtered
+            from app.service import get_items_filtered
             fake_conn = object()
             get_items_filtered(fake_conn, min_price=1.0, max_price=50.0)
         mock_repo.get_items_filtered.assert_called_once_with(fake_conn, None, 1.0, 50.0)
@@ -61,7 +62,7 @@ class TestGetItemsFiltered:
     def test_all_filters_forwarded(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = 404
-            from src.service import get_items_filtered
+            from app.service import get_items_filtered
             fake_conn = object()
             get_items_filtered(fake_conn, threshold=3, min_price=2.0, max_price=100.0)
         mock_repo.get_items_filtered.assert_called_once_with(fake_conn, 3, 2.0, 100.0)
@@ -69,7 +70,7 @@ class TestGetItemsFiltered:
     def test_returns_404_when_no_matches(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_items_filtered.return_value = 404
-            from src.service import get_items_filtered
+            from app.service import get_items_filtered
             fake_conn = object()
             result = get_items_filtered(fake_conn, threshold=1)
         assert result == 404
@@ -85,7 +86,7 @@ class TestAddItem:
         item_data = make_item_data()
         with patch(REPO) as mock_repo:
             mock_repo.add_data.return_value = 42
-            from src.service import add_item
+            from app.service import add_item
             fake_conn = object()
             result = add_item(fake_conn, item_data)
         assert result == {"id": 42, "name": "Widget", "quantity": 10, "price": 9.99}
@@ -94,17 +95,17 @@ class TestAddItem:
         item_data = make_item_data(name="Bolt", quantity=100, price=0.05)
         with patch(REPO) as mock_repo:
             mock_repo.add_data.return_value = 7
-            from src.service import add_item
+            from app.service import add_item
             fake_conn = object()
             add_item(fake_conn, item_data)
         mock_repo.add_data.assert_called_once_with(fake_conn, "Bolt", 100, 0.05)
 
     def test_raises_duplicate_error_on_integrity_error(self):
-        from src.exceptions import DuplicateItemError
+        from app.exceptions import DuplicateItemError
         item_data = make_item_data()
         with patch(REPO) as mock_repo:
             mock_repo.add_data.side_effect = sqlite3.IntegrityError
-            from src.service import add_item
+            from app.service import add_item
             with pytest.raises(DuplicateItemError, match="item already exists"):
                 fake_conn = object()
                 add_item(fake_conn, item_data)
@@ -113,7 +114,7 @@ class TestAddItem:
         item_data = make_item_data(quantity=0)
         with patch(REPO) as mock_repo:
             mock_repo.add_data.return_value = 5
-            from src.service import add_item
+            from app.service import add_item
             fake_conn = object()
             result = add_item(fake_conn, item_data)
         assert result["quantity"] == 0
@@ -122,7 +123,7 @@ class TestAddItem:
         item_data = make_item_data(price=0.0)
         with patch(REPO) as mock_repo:
             mock_repo.add_data.return_value = 6
-            from src.service import add_item
+            from app.service import add_item
             fake_conn = object()
             result = add_item(fake_conn, item_data)
         assert result["price"] == 0.0
@@ -138,16 +139,16 @@ class TestGetItemById:
         item = make_db_item()
         with patch(REPO) as mock_repo:
             mock_repo.get_item_by_id.return_value = item
-            from src.service import get_item_by_id
+            from app.service import get_item_by_id
             fake_conn = object()
             result = get_item_by_id(fake_conn, 1)
         assert result == item
 
     def test_raises_item_not_found_when_missing(self):
-        from src.exceptions import ItemNotFoundError
+        from app.exceptions import ItemNotFoundError
         with patch(REPO) as mock_repo:
             mock_repo.get_item_by_id.return_value = None
-            from src.service import get_item_by_id
+            from app.service import get_item_by_id
             with pytest.raises(ItemNotFoundError, match="Item 99 not found"):
                 fake_conn = object()
                 get_item_by_id(fake_conn, 99)
@@ -155,7 +156,7 @@ class TestGetItemById:
     def test_calls_repo_with_correct_id(self):
         with patch(REPO) as mock_repo:
             mock_repo.get_item_by_id.return_value = make_db_item()
-            from src.service import get_item_by_id
+            from app.service import get_item_by_id
             fake_conn = object()
             get_item_by_id(fake_conn, 7)
         mock_repo.get_item_by_id.assert_called_once_with(fake_conn, 7)
@@ -170,58 +171,63 @@ class TestUpdateItem:
     def test_successful_update_returns_repo_result(self):
         item_update = make_item_data(name="Updated Widget", quantity=20, price=14.99)
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = False
-            mock_repo.update_item.return_value = True
-            from src.service import update_item
+            mock_repo.update_item.return_value = UpdateResult(
+                affected_rows=1,
+                reason="ok",
+                item={
+                    "id": 1,
+                    "name": "Updated Widget",
+                    "quantity": 20,
+                    "price": 14.99
+                }
+            )
+            from app.service import update_item
             fake_conn = object()
             result = update_item(fake_conn, 1, item_update)
-        assert result is True
+        assert result == {
+        "id": 1,
+        "name": "Updated Widget",
+        "quantity": 20,
+        "price": 14.99
+    }
 
     def test_raises_not_found_when_item_missing(self):
-        from src.exceptions import ItemNotFoundError
+        from app.exceptions import ItemNotFoundError
         item_update = make_item_data()
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = None
-            from src.service import update_item
+            mock_repo.update_item.return_value = UpdateResult(0, None, reason="not_found")
+            from app.service import update_item
             with pytest.raises(ItemNotFoundError):
                 fake_conn = object()
                 update_item(fake_conn, 99, item_update)
 
-    def test_raises_duplicate_when_name_taken(self):
-        from src.exceptions import DuplicateItemError
+    def test_raises_conflict_when_name_taken(self):
+        from app.exceptions import ItemConflictError
         item_update = make_item_data(name="Taken Name")
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = True
-            from src.service import update_item
-            with pytest.raises(DuplicateItemError):
+            mock_repo.update_item.return_value = UpdateResult(0, None, reason="conflict")
+            from app.service import update_item
+            with pytest.raises(ItemConflictError):
                 fake_conn = object()
                 update_item(fake_conn, 1, item_update)
 
     def test_repo_update_called_with_correct_args(self):
         item_update = make_item_data(name="New Name", quantity=5, price=3.50)
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = False
-            mock_repo.update_item.return_value = True
-            from src.service import update_item
+            mock_repo.update_item.return_value = UpdateResult(0,
+                item={
+                    "id": 1,
+                    "name": "New Name",
+                    "quantity": 5,
+                    "price": 3.50
+                },
+                reason="ok")
+            from app.service import update_item
             fake_conn = object()
             update_item(fake_conn, 1, item_update)
         mock_repo.update_item.assert_called_once_with(
             fake_conn, 1, name="New Name", quantity=5, price=3.50
         )
-
-    def test_name_uniqueness_check_is_called(self):
-        item_update = make_item_data(name="SomeName")
-        with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = False
-            mock_repo.update_item.return_value = True
-            from src.service import update_item
-            fake_conn = object()
-            update_item(fake_conn, 1, item_update)
-        mock_repo.item_name_exists.assert_called_once_with(fake_conn, "SomeName")
 
 
 # ===========================================================================
@@ -233,21 +239,21 @@ class TestDeleteItem:
     def test_returns_true_when_deleted(self):
         with patch(REPO) as mock_repo:
             mock_repo.delete_item.return_value = True
-            from src.service import delete_item
+            from app.service import delete_item
             fake_conn = object()
             assert delete_item(fake_conn, 1) is True
 
     def test_returns_false_when_not_found(self):
         with patch(REPO) as mock_repo:
             mock_repo.delete_item.return_value = False
-            from src.service import delete_item
+            from app.service import delete_item
             fake_conn = object()
             assert delete_item(fake_conn, 999) is False
 
     def test_calls_repo_with_correct_id(self):
         with patch(REPO) as mock_repo:
             mock_repo.delete_item.return_value = True
-            from src.service import delete_item
+            from app.service import delete_item
             fake_conn = object()
             delete_item(fake_conn, 42)
         mock_repo.delete_item.assert_called_once_with(fake_conn, 42)
@@ -262,7 +268,7 @@ class TestStockValue:
     def test_returns_wrapped_total(self):
         with patch(REPO) as mock_repo:
             mock_repo.stock_value.return_value = 1234.56
-            from src.service import stock_value
+            from app.service import stock_value
             fake_conn = object()
             result = stock_value(fake_conn)
         assert result == {"total_stock_value": 1234.56}
@@ -270,7 +276,7 @@ class TestStockValue:
     def test_returns_zero_when_no_stock(self):
         with patch(REPO) as mock_repo:
             mock_repo.stock_value.return_value = 0
-            from src.service import stock_value
+            from app.service import stock_value
             fake_conn = object()
             result = stock_value(fake_conn)
         assert result == {"total_stock_value": 0}
@@ -278,7 +284,7 @@ class TestStockValue:
     def test_calls_repo_stock_value(self):
         with patch(REPO) as mock_repo:
             mock_repo.stock_value.return_value = 0
-            from src.service import stock_value
+            from app.service import stock_value
             fake_conn = object()
             stock_value(fake_conn)
         mock_repo.stock_value.assert_called_once()
