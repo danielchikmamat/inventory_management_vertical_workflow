@@ -17,28 +17,6 @@ DB_CONN = "src.repository.get_db_connection"
 # Fixtures (move to conftest.py if sharing with other test files)
 # ---------------------------------------------------------------------------
 
-@pytest.fixture
-def test_db():
-    """
-    Fresh in-memory SQLite DB for each test.
-    that each try to close it internally.
-    """
-    schema = Path("src/db/schema.sql").read_text()
-
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-
-    conn.executescript(schema)
-    conn.commit()
-
-    yield conn
-
-    conn.close()
-
-
-
-
-
 
 @pytest.fixture
 def seeded_db(test_db):
