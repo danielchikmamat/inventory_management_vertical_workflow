@@ -1,6 +1,8 @@
 """ Repository for handling database operations """
 
-from src.db.connection import get_db_connection
+from app.db.connection import get_db_connection
+import sqlite3 as sqlite3
+from app.repo.model import UpdateResult
 
 
 def add_data(conn, name, quantity, price, ):
@@ -67,32 +69,31 @@ def get_item_by_id(conn, item_id):
     return dict(item) if item else None
 
 
-def update_item(conn, item_id, name=None, quantity=None, price=None):
+def update_item(conn, item_id, **fields) -> UpdateResult:
     cursor = conn.cursor()
 
-    fields = []
-    params = []
+    try:
+        set_clause = ", ".join(f"{k} = ?" for k in fields)
 
-    if name is not None:
-        fields.append("name = ?")
-        params.append(name)
-    if quantity is not None:
-        fields.append("quantity = ?")
-        params.append(quantity)
-    if price is not None:
-        fields.append("price = ?")
-        params.append(price)
+        cursor.execute(
+            f"UPDATE items SET {set_clause} WHERE id = ?",
+            list(fields.values()) + [item_id]
+        )
 
-    if not fields:
-        return False  # No fields to update
+        if cursor.rowcount == 0:
+            return UpdateResult(0, None, reason="not_found")
 
-    params.append(item_id)
-    query = f"UPDATE items SET {', '.join(fields)} WHERE id = ?"
-    cursor.execute(query, tuple(params))
-    updated = cursor.rowcount > 0
-    conn.commit()
+        conn.commit()
 
-    return updated
+        row = conn.execute(
+            "SELECT * FROM items WHERE id = ?", (item_id,)
+        ).fetchone()
+
+        return UpdateResult(1, dict(row), reason="ok")
+
+    except sqlite3.IntegrityError:
+        # UNIQUE constraint violation → duplicate name
+        return UpdateResult(0, None, reason="conflict")
 
 
 def delete_item(conn, item_id):

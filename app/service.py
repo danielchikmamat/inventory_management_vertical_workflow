@@ -1,7 +1,7 @@
 """ business logic for inventory management system """
 
-import src.repo.repository as repo
-from src.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError, DbError
+import app.repo.repository as repo
+from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError, DbError
 import sqlite3 as sqlite3
 
 

@@ -1,8 +1,8 @@
 
 
 from fastapi import FastAPI
-from src.db.init_db import init_db
-from src.routes import router
+from app.db.init_db import init_db
+from app.routes import router
 
 app = FastAPI()
 

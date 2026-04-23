@@ -23,8 +23,8 @@ Client → Pydantic → Router → Service → Repository → DB
 - status code 404 -> not found
 - 409 -> duplicate
 - 422 -> validation (pydantic)
-- return [] or 404?
-- what does update return?
+- return [] or 404? 404
+- what does update return? 
 - do deletes return body or just status. Returns status code 204
 
 ## clean architecture pass

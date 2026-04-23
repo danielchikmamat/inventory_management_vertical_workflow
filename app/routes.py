@@ -1,11 +1,11 @@
 """ api endpoints for inventory management system """
 
-from src.schemas import Item, ItemUpdate
+from app.schemas import Item, ItemUpdate
 from fastapi import APIRouter, Depends
-import src.service as service
+import app.service as service
 from fastapi import HTTPException, Response
-from src.exceptions import ItemNotFoundError, DuplicateItemError
-from src.db.connection import get_db_connection
+from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError
+from app.db.connection import get_db_connection
 
 
 router = APIRouter()
@@ -46,13 +46,17 @@ def fetch_item_by_id(item_id: int, conn=Depends(get_db_connection)):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.put("/items/{item_id}")
+@router.put("/items/{item_id}", status_code=200)
 def put_update_item(item_id: int, item_update: ItemUpdate, conn=Depends(get_db_connection)):
     # Implementation for updating an item
     try:
         return service.update_item(conn, item_id, item_update)
     except ItemNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ItemConflictError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.delete("/items/{item_id}")

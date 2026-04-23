@@ -14,7 +14,7 @@ def test_db():
     Fresh in-memory SQLite DB for each test.
     that each try to close it internally.
     """
-    schema = Path("src/db/schema.sql").read_text()
+    schema = Path("app/db/schema.sql").read_text()
 
     conn = sqlite3.connect(":memory:", check_same_thread=False)
     conn.row_factory = sqlite3.Row
