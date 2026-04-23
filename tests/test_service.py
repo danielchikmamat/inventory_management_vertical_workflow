@@ -5,7 +5,8 @@ Repository is mocked so no DB is required.
 import sqlite3
 import pytest
 from unittest.mock import patch
-from types import SimpleNamespace
+from src.schemas import Item
+from src.repo.model import UpdateResult
 
 
 # ---------------------------------------------------------------------------
@@ -13,7 +14,7 @@ from types import SimpleNamespace
 # ---------------------------------------------------------------------------
 
 def make_item_data(name="Widget", quantity=10, price=9.99):
-    return SimpleNamespace(name=name, quantity=quantity, price=price)
+    return Item(name=name, quantity=quantity, price=price)
 
 def make_db_item(id=1, name="Widget", quantity=10, price=9.99):
     return {"id": id, "name": name, "quantity": quantity, "price": price}
@@ -170,58 +171,63 @@ class TestUpdateItem:
     def test_successful_update_returns_repo_result(self):
         item_update = make_item_data(name="Updated Widget", quantity=20, price=14.99)
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = False
-            mock_repo.update_item.return_value = True
+            mock_repo.update_item.return_value = UpdateResult(
+                affected_rows=1,
+                reason="ok",
+                item={
+                    "id": 1,
+                    "name": "Updated Widget",
+                    "quantity": 20,
+                    "price": 14.99
+                }
+            )
             from src.service import update_item
             fake_conn = object()
             result = update_item(fake_conn, 1, item_update)
-        assert result is True
+        assert result == {
+        "id": 1,
+        "name": "Updated Widget",
+        "quantity": 20,
+        "price": 14.99
+    }
 
     def test_raises_not_found_when_item_missing(self):
         from src.exceptions import ItemNotFoundError
         item_update = make_item_data()
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = None
+            mock_repo.update_item.return_value = UpdateResult(0, None, reason="not_found")
             from src.service import update_item
             with pytest.raises(ItemNotFoundError):
                 fake_conn = object()
                 update_item(fake_conn, 99, item_update)
 
-    def test_raises_duplicate_when_name_taken(self):
-        from src.exceptions import DuplicateItemError
+    def test_raises_conflict_when_name_taken(self):
+        from src.exceptions import ItemConflictError
         item_update = make_item_data(name="Taken Name")
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = True
+            mock_repo.update_item.return_value = UpdateResult(0, None, reason="conflict")
             from src.service import update_item
-            with pytest.raises(DuplicateItemError):
+            with pytest.raises(ItemConflictError):
                 fake_conn = object()
                 update_item(fake_conn, 1, item_update)
 
     def test_repo_update_called_with_correct_args(self):
         item_update = make_item_data(name="New Name", quantity=5, price=3.50)
         with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = False
-            mock_repo.update_item.return_value = True
+            mock_repo.update_item.return_value = UpdateResult(0,
+                item={
+                    "id": 1,
+                    "name": "New Name",
+                    "quantity": 5,
+                    "price": 3.50
+                },
+                reason="ok")
             from src.service import update_item
             fake_conn = object()
             update_item(fake_conn, 1, item_update)
         mock_repo.update_item.assert_called_once_with(
             fake_conn, 1, name="New Name", quantity=5, price=3.50
         )
-
-    def test_name_uniqueness_check_is_called(self):
-        item_update = make_item_data(name="SomeName")
-        with patch(REPO) as mock_repo:
-            mock_repo.get_item_by_id.return_value = make_db_item()
-            mock_repo.item_name_exists.return_value = False
-            mock_repo.update_item.return_value = True
-            from src.service import update_item
-            fake_conn = object()
-            update_item(fake_conn, 1, item_update)
-        mock_repo.item_name_exists.assert_called_once_with(fake_conn, "SomeName")
 
 
 # ===========================================================================

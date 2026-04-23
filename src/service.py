@@ -1,7 +1,7 @@
 """ business logic for inventory management system """
 
-import src.repository as repo
-from src.exceptions import ItemNotFoundError, DuplicateItemError
+import src.repo.repository as repo
+from src.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError, DbError
 import sqlite3 as sqlite3
 
 
@@ -40,19 +40,21 @@ def get_item_by_id(conn, item_id):
 
 
 def update_item(conn, item_id, item_update):
-    # Implementation for updating an item
+    data = item_update.model_dump(exclude_none=True)
 
-    get_item_by_id(conn, item_id) #ensures items exist, raises exception
-    if repo.item_name_exists(conn, item_update.name):
-        raise DuplicateItemError(f"Name {item_update.name} already exists ")
+    if not data:
+        raise ValueError("No fields provided")
 
-    updated = repo.update_item(
-        conn,
-        item_id,
-        name=item_update.name,
-        quantity=item_update.quantity,
-        price=item_update.price)
-    return updated
+    result = repo.update_item(conn, item_id, **data)
+
+    if result.reason == "not_found":
+        raise ItemNotFoundError("Item not found")
+
+    if result.reason == "conflict":
+        raise ItemConflictError("Name already exists")
+
+    return result.item
+
 
 
 def delete_item(conn, item_id):
