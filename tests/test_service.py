@@ -5,7 +5,7 @@ Repository is mocked so no DB is required.
 import sqlite3
 import pytest
 from unittest.mock import patch
-from app.schemas import Item
+from app.schemas import Item, ItemUpdate
 from app.repo.model import UpdateResult
 
 
@@ -15,6 +15,9 @@ from app.repo.model import UpdateResult
 
 def make_item_data(name="Widget", quantity=10, price=9.99):
     return Item(name=name, quantity=quantity, price=price)
+
+def make_item_update(name="Widget", quantity=10, price=9.99):
+    return ItemUpdate(name=name, quantity=quantity, price=price)
 
 def make_db_item(id=1, name="Widget", quantity=10, price=9.99):
     return {"id": id, "name": name, "quantity": quantity, "price": price}
@@ -229,6 +232,30 @@ class TestUpdateItem:
             fake_conn, 1, name="New Name", quantity=5, price=3.50
         )
 
+    def test_no_field_provided(self):
+        item_update = make_item_update(name=None, quantity=None, price=None)
+        from app.service import update_item
+        with pytest.raises(ValueError):
+            fake_conn = object()
+            update_item(fake_conn, 1, item_update)
+
+    def test_partial_update(self):
+        item_update = make_item_update(name=None, quantity=100, price=None)
+        with patch(REPO) as mock_repo:
+            mock_repo.update_item.return_value = UpdateResult(0,
+                item={
+                    "id": 1,
+                    "name": "Widget",
+                    "quantity": 100,
+                    "price": 9.99
+                },
+                reason="ok")
+            from app.service import update_item
+            fake_conn = object()
+            update_item(fake_conn, 1, item_update)
+        mock_repo.update_item.assert_called_once_with(
+            fake_conn, 1, quantity=100
+        )
 
 # ===========================================================================
 # delete_item
