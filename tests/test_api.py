@@ -248,7 +248,7 @@ class TestUpdateItem:
 
          update_data = {}
          response = client.put("/items/1", json=update_data)
-         assert response.status_code == 422
+         assert response.status_code == 400
 
 
 class TestDeleteItem:
@@ -274,7 +274,7 @@ class TestDeleteItem:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-        
+
     def test_delete_item_invalid_id(self, client: TestClient):
         """Test deleting item with invalid ID"""
         response = client.delete("/items/invalid")

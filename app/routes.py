@@ -19,10 +19,8 @@ def read_root():
 
 @router.post("/items/", status_code=201)
 def create_item(item: Item, conn=Depends(get_db_connection)):
-    try:
-        return service.add_item(conn, item)
-    except DuplicateItemError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+    return service.add_item(conn, item)
+
 
 
 
@@ -31,40 +29,29 @@ def get_items(
     filters: ItemFilter = Depends(), #Depends make it interpret it as query
     conn=Depends(get_db_connection)
     ):
-    try:
-        return service.get_items_filtered(conn, filters)
-    except ItemNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+
+    return service.get_items_filtered(conn, filters)
+
 
 
 @router.get("/items/{item_id}")
 def fetch_item_by_id(item_id: int, conn=Depends(get_db_connection)):
-    try:
-        return service.get_item_by_id(conn, item_id)
-    except ItemNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+
+    return service.get_item_by_id(conn, item_id)
+
 
 
 @router.put("/items/{item_id}", status_code=200)
 def put_update_item(item_id: int, item_update: ItemUpdate, conn=Depends(get_db_connection)):
     # Implementation for updating an item
-    try:
-        return service.update_item(conn, item_id, item_update)
-    except ItemNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ItemConflictError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+
+    return service.update_item(conn, item_id, item_update)
 
 
 @router.delete("/items/{item_id}")
 def delete_item(item_id: int, conn=Depends(get_db_connection)):
     result = service.delete_item(conn, item_id)
     return result
-
 
 
 

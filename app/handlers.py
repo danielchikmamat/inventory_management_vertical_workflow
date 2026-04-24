@@ -5,6 +5,7 @@ from app.exceptions import (
     ItemNotFoundError,
     DuplicateItemError,
     ItemConflictError,
+    NoFieldsProvidedError,
     DbError,
 )
 
@@ -30,6 +31,14 @@ def register_exception_handlers(app: FastAPI):
             status_code=409,
             content={"detail": str(exc)}
         )
+
+    @app.exception_handler(NoFieldsProvidedError)
+    def no_fields_handler(request: Request, exc: NoFieldsProvidedError):
+        return JSONResponse(
+            status_code=400,
+            content={"detail": str(exc)}
+        )
+
 
     @app.exception_handler(DbError)
     def db_error_handler(request: Request, exc: DbError):
