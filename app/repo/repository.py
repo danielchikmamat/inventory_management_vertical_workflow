@@ -21,44 +21,38 @@ def add_data(conn, name, quantity, price, ):
     return item_id
 
 
-
-def get_items_filtered(
-        conn,
-        threshold = None,
-        min_price = None,
-        max_price = None
-        # add more filters here as needed
-):
-    """ default to fetching all items if no filters provided """
-
+def get_items_filtered(conn, **filters):
     cursor = conn.cursor()
 
-    query = "SELECT * FROM items"
+    rules = {
+        "threshold": "quantity < ?",
+        "min_price": "price >= ?",
+        "max_price": "price <= ?",
+    }
+
     conditions = []
     params = []
 
-    if threshold is not None:
-        conditions.append("quantity < ?")
-        params.append(threshold)
+    try:
+        for key, expr in rules.items():
+            value = filters.get(key)
+            if value is None:
+                continue
+            conditions.append(expr)
+            params.append(value)
 
-    if min_price is not None:
-        conditions.append("price >= ?")
-        params.append(min_price)
+        query = "SELECT * FROM items"
 
-    if max_price is not None:
-        conditions.append("price <= ?")
-        params.append(max_price)
-    # add more conditions here as needed
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
 
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
 
-    cursor.execute(query, tuple(params))
-    rows = cursor.fetchall()
+        return [dict(row) for row in rows]
 
-
-    return [dict(row) for row in rows]
-
+    except sqlite3.Error:
+        return []
 
 def get_item_by_id(conn, item_id):
 

@@ -1,18 +1,23 @@
 """ business logic for inventory management system """
 
 import app.repo.repository as repo
-from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError, DbError
+from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError
 import sqlite3 as sqlite3
 
 
 def get_items_filtered(
     conn,
-    threshold = None,
-    min_price = None,
-    max_price = None
-    # add more filters here as needed
+    filters
 ):
-    items = repo.get_items_filtered(conn, threshold, min_price, max_price)
+    data = filters.model_dump(exclude_none=True)
+    min_price = data.get("min_price")
+    max_price = data.get("max_price")
+
+    if min_price is not None and max_price is not None:
+        if min_price >= max_price:
+            raise ValueError("min price cannot be greater or equal to max price")
+
+    items = repo.get_items_filtered(conn, **data)
     if not items:
         raise ItemNotFoundError("no items found")
     return items

@@ -1,6 +1,6 @@
 """ api endpoints for inventory management system """
 
-from app.schemas import Item, ItemUpdate
+from app.schemas import Item, ItemUpdate, ItemFilter
 from fastapi import APIRouter, Depends
 import app.service as service
 from fastapi import HTTPException, Response
@@ -24,18 +24,17 @@ def create_item(item: Item, conn=Depends(get_db_connection)):
 
 
 
-@router.get("/items/")
+@router.get("/items/", status_code=200)
 def get_items(
-    threshold: int | None = None,
-    min_price: float | None = None,
-    max_price: float | None = None,
+    filters: ItemFilter = Depends(), #Depends make it interpret it as query
     conn=Depends(get_db_connection)
-    # add more filters here as needed
     ):
     try:
-        return service.get_items_filtered(conn, threshold, min_price, max_price)
+        return service.get_items_filtered(conn, filters)
     except ItemNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.get("/items/{item_id}")

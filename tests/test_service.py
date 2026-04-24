@@ -5,8 +5,9 @@ Repository is mocked so no DB is required.
 import sqlite3
 import pytest
 from unittest.mock import patch
-from app.schemas import Item, ItemUpdate
+from app.schemas import Item, ItemUpdate, ItemFilter
 from app.repo.model import UpdateResult
+from app.exceptions import ItemNotFoundError
 
 
 # ---------------------------------------------------------------------------
@@ -36,48 +37,57 @@ REPO = "app.service.repo"
 
 class TestGetItemsFiltered:
 
-    def test_no_filters_returns_all(self):
-        items = [make_db_item(1), make_db_item(2, name="Gadget")]
+    def test_no_filters_forwarded(self):
+        no_filter = ItemFilter()
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = items
+
             from app.service import get_items_filtered
             fake_conn = object()
-            result = get_items_filtered(fake_conn)
-        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, None, None, None)
-        assert result == items
+            get_items_filtered(fake_conn, no_filter)
+
+        mock_repo.get_items_filtered.assert_called_once_with(fake_conn)
+        args, kwargs = mock_repo.get_items_filtered.call_args
+
+        assert args == (fake_conn,)
+        assert kwargs == {}
 
     def test_threshold_filter_forwarded(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = 404
             from app.service import get_items_filtered
             fake_conn = object()
-            get_items_filtered(fake_conn, threshold=5)
-        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, 5, None, None)
+            get_items_filtered(fake_conn, ItemFilter(threshold=5))
+        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, threshold=5)
 
     def test_price_range_filter_forwarded(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = 404
             from app.service import get_items_filtered
             fake_conn = object()
-            get_items_filtered(fake_conn, min_price=1.0, max_price=50.0)
-        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, None, 1.0, 50.0)
+            get_items_filtered(fake_conn, ItemFilter(min_price=1.0, max_price=50.0))
+        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, min_price=1.0, max_price=50.0)
 
     def test_all_filters_forwarded(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = 404
             from app.service import get_items_filtered
             fake_conn = object()
-            get_items_filtered(fake_conn, threshold=3, min_price=2.0, max_price=100.0)
-        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, 3, 2.0, 100.0)
+            get_items_filtered(fake_conn, ItemFilter(threshold=3, min_price=2.0, max_price=100.0))
+        mock_repo.get_items_filtered.assert_called_once_with(fake_conn, threshold=3, min_price=2.0, max_price=100.0)
 
-    def test_returns_404_when_no_matches(self):
+    def test_raises_item_not_found_when_no_matches(self):
         with patch(REPO) as mock_repo:
-            mock_repo.get_items_filtered.return_value = 404
+            mock_repo.get_items_filtered.return_value = []
+
             from app.service import get_items_filtered
             fake_conn = object()
-            result = get_items_filtered(fake_conn, threshold=1)
-        assert result == 404
 
+            with pytest.raises(ItemNotFoundError):
+                get_items_filtered(fake_conn, ItemFilter(threshold=1))
+
+    def test_min_max_price_compability(self):
+        from app.service import get_items_filtered
+        with pytest.raises(ValueError) as exc_info:
+            fake_conn = object()
+            get_items_filtered(fake_conn, ItemFilter(min_price=10, max_price=10))
+        assert str(exc_info.value) == "min price cannot be greater or equal to max price"
 
 # ===========================================================================
 # add_item
