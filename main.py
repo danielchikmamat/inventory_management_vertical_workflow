@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from app.db.init_db import init_db
 from app.routes import router
-
+from app.handlers import register_exception_handlers
 app = FastAPI()
 
 #create table on startup
@@ -15,3 +15,4 @@ def startup_event():
 #include routes
 app.include_router(router)
 
+register_exception_handlers(app)

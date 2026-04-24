@@ -8,6 +8,7 @@ from main import app
 from app.schemas import Item, ItemUpdate, ItemFilter
 from app.exceptions import ItemNotFoundError, DuplicateItemError
 from app.db.connection import get_db_connection
+from app.repo.model import DeleteResult
 
 
 @pytest.fixture
@@ -160,7 +161,7 @@ class TestGetItems:
 
         assert response.status_code == 200
         assert response.json() == []
-        
+
 
 
 class TestGetItemById:
@@ -256,24 +257,24 @@ class TestDeleteItem:
     @patch('app.service.delete_item')
     def test_delete_item_success(self, mock_delete_item, client: TestClient):
         """Test successful item deletion"""
-        mock_delete_item.return_value = True
+        mock_delete_item.return_value = {"id": 1, "name": "Widget"}
 
         response = client.delete("/items/1")
 
-        assert response.status_code == 204
-        assert response.content == b''
+        assert response.status_code == 200
+        assert response.json() == {"id": 1, "name": "Widget"}
         mock_delete_item.assert_called_once_with(ANY, 1)
 
-    @patch('app.service.delete_item')
+    @patch("app.service.delete_item")
     def test_delete_item_not_found(self, mock_delete_item, client: TestClient):
-        """Test deleting non-existent item"""
-        mock_delete_item.return_value = False
+        mock_delete_item.side_effect = ItemNotFoundError("Item not found")
 
         response = client.delete("/items/999")
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
+        
     def test_delete_item_invalid_id(self, client: TestClient):
         """Test deleting item with invalid ID"""
         response = client.delete("/items/invalid")

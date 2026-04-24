@@ -8,3 +8,8 @@ class UpdateResult:
     affected_rows: int
     item: Optional[dict]
     reason: Reason = None
+
+@dataclass
+class DeleteResult:
+    item: Optional[dict]
+    reason: Reason = "ok"

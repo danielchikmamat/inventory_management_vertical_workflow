@@ -1,7 +1,7 @@
 """ Repository for handling database operations """
 
 import sqlite3 as sqlite3
-from app.repo.model import UpdateResult
+from app.repo.model import UpdateResult, DeleteResult
 from app.exceptions import DuplicateItemError
 
 
@@ -93,14 +93,16 @@ def update_item(conn, item_id, **fields) -> UpdateResult:
 
 
 def delete_item(conn, item_id):
+    item = get_item_by_id(conn, item_id)
+    if item is None:
+        return DeleteResult(None, reason="not_found")
 
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM items WHERE id = ?", (item_id,))
-    deleted = cursor.rowcount > 0
     conn.commit()
 
-    return deleted
+    return DeleteResult(item, reason="ok")
 
 
 def stock_value(conn):

@@ -2,6 +2,7 @@
 
 from app.schemas import Item, ItemUpdate, ItemFilter
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 import app.service as service
 from fastapi import HTTPException, Response
 from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError
@@ -9,6 +10,7 @@ from app.db.connection import get_db_connection
 
 
 router = APIRouter()
+
 
 @router.get("/")
 def read_root():
@@ -60,10 +62,10 @@ def put_update_item(item_id: int, item_update: ItemUpdate, conn=Depends(get_db_c
 
 @router.delete("/items/{item_id}")
 def delete_item(item_id: int, conn=Depends(get_db_connection)):
-    success = service.delete_item(conn, item_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return Response(status_code=204)
+    result = service.delete_item(conn, item_id)
+    return result
+
+
 
 
 @router.get("/metrics/stock-value")
