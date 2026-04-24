@@ -13,3 +13,9 @@ class ItemUpdate(BaseModel):
     quantity: Optional[int] = Field(default=None, ge=0)
 
 
+
+class ItemFilter(BaseModel):
+    threshold: Optional[int] = Field(default=None, ge=0)
+    min_price: Optional[float] = Field(default=None, ge=0)
+    max_price: Optional[float] = Field(default=None, ge=0)
+    # add more filters here as needed
