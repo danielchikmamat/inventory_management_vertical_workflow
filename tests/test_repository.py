@@ -8,7 +8,7 @@ from unittest.mock import patch
 import app.repo.repository as repository
 from pathlib import Path
 from app.db.connection import get_db_connection
-from app.repo.model import UpdateResult
+from app.repo.model import UpdateResult, DeleteResult
 from app.exceptions import DuplicateItemError
 
 
@@ -192,11 +192,16 @@ class TestUpdateItem:
 
 class TestDeleteItem:
 
-    def test_returns_true_when_deleted(self, seeded_db):
+    def test_returns_body_when_deleted(self, seeded_db):
         row = seeded_db.execute("SELECT id FROM items WHERE name='Widget'").fetchone()
         with patch(DB_CONN, return_value=seeded_db):
             result = repository.delete_item(seeded_db, row["id"])
-        assert result is True
+        assert result == DeleteResult(item={
+            "id": row["id"],
+            "name": "Widget",
+            "quantity": 10,
+            "price": 9.99
+        }, reason="ok")
 
     def test_item_no_longer_in_db(self, seeded_db):
         row = seeded_db.execute("SELECT id FROM items WHERE name='Widget'").fetchone()
@@ -207,10 +212,10 @@ class TestDeleteItem:
                                       (item_id,)).fetchone()
         assert remaining is None
 
-    def test_returns_false_for_nonexistent_item(self, test_db):
+    def test_returns_for_nonexistent_item(self, test_db):
         with patch(DB_CONN, return_value=test_db):
             result = repository.delete_item(test_db, 999)
-        assert result is False
+        assert result == DeleteResult(None, reason="not_found")
 
     def test_other_items_unaffected(self, seeded_db):
         row = seeded_db.execute("SELECT id FROM items WHERE name='Widget'").fetchone()

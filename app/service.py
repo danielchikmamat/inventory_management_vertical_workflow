@@ -3,7 +3,6 @@
 import app.repo.repository as repo
 from app.exceptions import ItemNotFoundError, ItemConflictError
 
-
 def get_items_filtered(
     conn,
     filters
@@ -66,8 +65,12 @@ def update_item(conn, item_id, item_update):
 
 
 def delete_item(conn, item_id):
+    result = repo.delete_item(conn, item_id)
 
-    return repo.delete_item(conn, item_id)
+    if result.reason == "not_found":
+        raise ItemNotFoundError("Item not found")
+
+    return result.item
 
 
 def stock_value(conn):

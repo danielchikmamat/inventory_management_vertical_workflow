@@ -6,7 +6,7 @@ import sqlite3
 import pytest
 from unittest.mock import patch
 from app.schemas import Item, ItemUpdate, ItemFilter
-from app.repo.model import UpdateResult
+from app.repo.model import UpdateResult, DeleteResult
 from app.exceptions import ItemNotFoundError
 
 
@@ -273,23 +273,32 @@ class TestUpdateItem:
 
 class TestDeleteItem:
 
-    def test_returns_true_when_deleted(self):
+    def test_returns_when_deleted(self):
         with patch(REPO) as mock_repo:
-            mock_repo.delete_item.return_value = True
+            mock_repo.delete_item.return_value = DeleteResult(item={
+                "name": "widget"},
+                reason="ok"
+                )
             from app.service import delete_item
             fake_conn = object()
-            assert delete_item(fake_conn, 1) is True
+            result = delete_item(fake_conn, 1)
+            assert result == {"name": "widget"}
 
-    def test_returns_false_when_not_found(self):
+    def test_returns_raise_ItemNotFound_when_not_found(self):
         with patch(REPO) as mock_repo:
-            mock_repo.delete_item.return_value = False
+            mock_repo.delete_item.return_value = DeleteResult(None, reason="not_found")
             from app.service import delete_item
-            fake_conn = object()
-            assert delete_item(fake_conn, 999) is False
+            with pytest.raises(ItemNotFoundError):
+                fake_conn = object()
+                delete_item(fake_conn, 999)
 
     def test_calls_repo_with_correct_id(self):
         with patch(REPO) as mock_repo:
-            mock_repo.delete_item.return_value = True
+            mock_repo.delete_item.return_value = DeleteResult(item={
+                "name": "widget"
+            },
+            reason="ok"
+            )
             from app.service import delete_item
             fake_conn = object()
             delete_item(fake_conn, 42)
