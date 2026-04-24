@@ -262,6 +262,12 @@ class TestUpdateItem:
 
         assert response.status_code == 422
 
+    def test_update_item_no_data_provided(self, client: TestClient):
+
+         update_data = {}
+         response = client.put("/items/1", json=update_data)
+         assert response.status_code == 422
+
 
 class TestDeleteItem:
     """Tests for DELETE /items/{item_id} endpoint"""
