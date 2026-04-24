@@ -113,13 +113,13 @@ class TestAddItem:
             add_item(fake_conn, item_data)
         mock_repo.add_data.assert_called_once_with(fake_conn, "Bolt", 100, 0.05)
 
-    def test_raises_duplicate_error_on_integrity_error(self):
+    def test_propogate_duplicate_error_on_integrity_error(self):
         from app.exceptions import DuplicateItemError
         item_data = make_item_data()
         with patch(REPO) as mock_repo:
-            mock_repo.add_data.side_effect = sqlite3.IntegrityError
+            mock_repo.add_data.side_effect = DuplicateItemError()
             from app.service import add_item
-            with pytest.raises(DuplicateItemError, match="item already exists"):
+            with pytest.raises(DuplicateItemError):
                 fake_conn = object()
                 add_item(fake_conn, item_data)
 

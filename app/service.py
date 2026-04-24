@@ -1,8 +1,7 @@
 """ business logic for inventory management system """
 
 import app.repo.repository as repo
-from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError
-import sqlite3 as sqlite3
+from app.exceptions import ItemNotFoundError, ItemConflictError
 
 
 def get_items_filtered(
@@ -22,12 +21,16 @@ def get_items_filtered(
         raise ItemNotFoundError("no items found")
     return items
 
+
 def add_item(conn, item_data):
 
-    try:
-        item_id = repo.add_data(conn, item_data.name, item_data.quantity, item_data.price)
-    except sqlite3.IntegrityError:
-        raise DuplicateItemError("item already exists")
+    item_id = repo.add_data(
+        conn,
+        item_data.name,
+        item_data.quantity,
+        item_data.price
+    )
+
     return {
         "id": item_id,
         "name": item_data.name,
