@@ -2,10 +2,7 @@
 
 from app.schemas import Item, ItemUpdate, ItemFilter
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 import app.service as service
-from fastapi import HTTPException, Response
-from app.exceptions import ItemNotFoundError, DuplicateItemError, ItemConflictError
 from app.db.connection import get_db_connection
 
 
