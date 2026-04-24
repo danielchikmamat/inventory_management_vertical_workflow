@@ -1,4 +1,3 @@
-from fastapi.responses import JSONResponse
 
 class ItemNotFoundError(Exception):
     pass
