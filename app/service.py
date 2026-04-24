@@ -1,7 +1,7 @@
 """ business logic for inventory management system """
 
 import app.repo.repository as repo
-from app.exceptions import ItemNotFoundError, ItemConflictError
+from app.exceptions import ItemNotFoundError, ItemConflictError, NoFieldsProvidedError
 
 def get_items_filtered(
     conn,
@@ -50,7 +50,7 @@ def update_item(conn, item_id, item_update):
     data = item_update.model_dump(exclude_none=True)
 
     if not data:
-        raise ValueError("No fields provided")
+        raise NoFieldsProvidedError("No fields provided")
 
     result = repo.update_item(conn, item_id, **data)
 

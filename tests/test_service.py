@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import patch
 from app.schemas import Item, ItemUpdate, ItemFilter
 from app.repo.model import UpdateResult, DeleteResult
-from app.exceptions import ItemNotFoundError
+from app.exceptions import ItemNotFoundError, NoFieldsProvidedError
 
 
 # ---------------------------------------------------------------------------
@@ -245,7 +245,7 @@ class TestUpdateItem:
     def test_no_field_provided(self):
         item_update = make_item_update(name=None, quantity=None, price=None)
         from app.service import update_item
-        with pytest.raises(ValueError):
+        with pytest.raises(NoFieldsProvidedError):
             fake_conn = object()
             update_item(fake_conn, 1, item_update)
 
