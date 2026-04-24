@@ -1,24 +1,26 @@
 """ Repository for handling database operations """
 
-from app.db.connection import get_db_connection
 import sqlite3 as sqlite3
 from app.repo.model import UpdateResult
+from app.exceptions import DuplicateItemError
 
 
-def add_data(conn, name, quantity, price, ):
+def add_data(conn, name, quantity, price):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO items (name, quantity, price)
+            VALUES (?, ?, ?)
+            """,
+            (name, quantity, price)
+        )
 
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO items (name, quantity, price)
-        VALUES (?, ?, ?)
-        """,
-        (name, quantity, price)
-    )
-
-    conn.commit()
-    item_id = cursor.lastrowid
-    return item_id
+        conn.commit()
+        item_id = cursor.lastrowid
+        return item_id
+    except sqlite3.IntegrityError:
+        raise DuplicateItemError("item already exists")
 
 
 def get_items_filtered(conn, **filters):
