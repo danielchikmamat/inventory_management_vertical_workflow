@@ -3,12 +3,11 @@ from sqlite3 import Connection
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, ANY
+from unittest.mock import patch, ANY
 from main import app
-from app.schemas import Item, ItemUpdate, ItemFilter
-from app.exceptions import ItemNotFoundError, DuplicateItemError
+from app.exceptions import ItemNotFoundError, ItemConflictError
 from app.db.connection import get_db_connection
-from app.repo.model import DeleteResult
+
 
 
 @pytest.fixture
@@ -90,7 +89,7 @@ class TestCreateItem:
     @patch('app.service.add_item')
     def test_create_item_duplicate_error(self, mock_add_item, client: TestClient):
         """Test item creation with duplicate name"""
-        mock_add_item.side_effect = DuplicateItemError("Item with this name already exists")
+        mock_add_item.side_effect = ItemConflictError("Item with this name already exists")
 
         item_data = {
             "name": "Duplicate Item",

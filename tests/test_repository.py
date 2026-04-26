@@ -3,13 +3,13 @@ Tests for repository.py — uses an in-memory SQLite DB, no files on disk.
 get_db_connection is patched to return the test connection for every test.
 """
 import pytest
-import sqlite3
 from unittest.mock import patch
 import app.repo.repository as repository
 from pathlib import Path
 from app.db.connection import get_db_connection
 from app.repo.model import UpdateResult, DeleteResult
-from app.exceptions import DuplicateItemError
+from app.exceptions import ItemConflictError
+
 
 
 DB_CONN = "app.db.connection.get_db_connection"
@@ -59,7 +59,7 @@ class TestAddData:
     def test_duplicate_name_raises_integrity_error(self, test_db):
         with patch(DB_CONN, return_value=test_db):
             repository.add_data(test_db, "Widget", 10, 9.99)
-            with pytest.raises(DuplicateItemError):
+            with pytest.raises(ItemConflictError):
                 repository.add_data(test_db, "Widget", 5, 4.99)
 
 

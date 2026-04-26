@@ -21,7 +21,7 @@ Client → Pydantic → Router → Service → Repository → DB
 
 ## Standardize error
 - status code 404 -> not found
-- 409 -> duplicate
+- 409 -> ItemConflictError (duplicate names)
 - 422 -> validation (pydantic)
 - what does update_item return? Body and status code 200
 - do deletes return body or just status. Returns body on the deleted item and status code 200

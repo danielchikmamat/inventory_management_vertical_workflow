@@ -2,7 +2,7 @@
 Tests for inventory management service layer (service.py).
 Repository is mocked so no DB is required.
 """
-import sqlite3
+
 import pytest
 from unittest.mock import patch
 from app.schemas import Item, ItemUpdate, ItemFilter
@@ -114,12 +114,12 @@ class TestAddItem:
         mock_repo.add_data.assert_called_once_with(fake_conn, "Bolt", 100, 0.05)
 
     def test_propogate_duplicate_error_on_integrity_error(self):
-        from app.exceptions import DuplicateItemError
+        from app.exceptions import ItemConflictError
         item_data = make_item_data()
         with patch(REPO) as mock_repo:
-            mock_repo.add_data.side_effect = DuplicateItemError()
+            mock_repo.add_data.side_effect = ItemConflictError()
             from app.service import add_item
-            with pytest.raises(DuplicateItemError):
+            with pytest.raises(ItemConflictError):
                 fake_conn = object()
                 add_item(fake_conn, item_data)
 

@@ -2,7 +2,7 @@
 
 import sqlite3 as sqlite3
 from app.repo.model import UpdateResult, DeleteResult
-from app.exceptions import DuplicateItemError
+from app.exceptions import ItemConflictError
 
 
 def add_data(conn, name, quantity, price):
@@ -20,7 +20,7 @@ def add_data(conn, name, quantity, price):
         item_id = cursor.lastrowid
         return item_id
     except sqlite3.IntegrityError:
-        raise DuplicateItemError("item already exists")
+        raise ItemConflictError("item already exists")
 
 
 def get_items_filtered(conn, **filters):

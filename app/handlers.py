@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 
 from app.exceptions import (
     ItemNotFoundError,
-    DuplicateItemError,
     ItemConflictError,
     NoFieldsProvidedError,
     DbError,
@@ -15,13 +14,6 @@ def register_exception_handlers(app: FastAPI):
     def item_not_found_handler(request: Request, exc: ItemNotFoundError):
         return JSONResponse(
             status_code=404,
-            content={"detail": str(exc)}
-        )
-
-    @app.exception_handler(DuplicateItemError)
-    def duplicate_item_handler(request: Request, exc: DuplicateItemError):
-        return JSONResponse(
-            status_code=409,
             content={"detail": str(exc)}
         )
 
