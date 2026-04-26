@@ -1,34 +1,32 @@
 # inventory_management_vertical_workflow
 
-## vertical workflow
-- develop one feature from api -> backend -> database
+Inventory management API written with FastAPI and sqlite3.
 
-## file stack error handling
-Client → Pydantic → Router → Service → Repository → DB
-- pydantic, ensure correct data type
-- router, raises http exception (how do we tell the client)
-- service, validate logic such as quantity being above 0 (what went wrong)
-- repository, try clause where we change the state of the db (INSERT, DELETE, UPDATE) (db errors)
+## Installation
 
+´´´bash
+git clone https://github.com/danielchikmamat/inventory_management_vertical_workflow.git
+´´´
+create a virtual enviroment python -m venv venv
 
-## query parameters
-- do this /items/ filters (threshold, min_price, max_price) and /items/{item_id} resource id
-- instead of /items/low-stock, /item/min-price etc can conflict with router pathing
+- for Mac/Linux: source venv/bin/activate
+- for Windows: venv\Scripts\activate
 
-## sql queries
-- never do this cursor.execute("f"SELECT * FROM items WHERE name = '{name}") SQL injection prone
-- do this cursor.execute("SELECT * FROM items WHERE name = ?", (name,)). name will be treated as data and not parsed as sql code
+pip install -r requirements.txt
 
-## Standardize error
-- status code 404 -> not found
-- 409 -> duplicate
-- 422 -> validation (pydantic)
-- return [] or 404? 404
-- what does update return? 
-- do deletes return body or just status. Returns status code 204
+## Usage
 
-## clean architecture pass
-- router -> no SQL
-- service -> no SQL
-- repository -> no HTTP logic
-- DB layer -> only connection handling
+start the FastAPI server
+´´´bash
+uvicorn main:app --reload
+´´´
+interactive UI use http://127.0.0.1:8000/docs for Swagger UI
+
+start by using the add_item post request to fill your db!
+
+## Tech Stack
+- FastAPI (backend framework)
+- SQLite3 (database)
+- Uvicorn (ASGI server)
+- Python
+
