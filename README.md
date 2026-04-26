@@ -21,6 +21,8 @@ source venv/bin/activate
 ```bash
 venv\Scripts\activate
 ```
+install the dependencies from requirements.txt
+
 ```bash
 pip install -r requirements.txt
 ```
