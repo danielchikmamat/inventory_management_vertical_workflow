@@ -21,9 +21,9 @@ source venv/bin/activate
 ```bash
 venv\Scripts\activate
 ```
-
+```bash
 pip install -r requirements.txt
-
+```
 ## Usage
 
 start the FastAPI server
