@@ -42,8 +42,8 @@ docker build -t inventory-management .
 SQLite stores data in a local file, so create a persistent folder:
 ```bash
 mkdir data
-
-in cmd
+```
+run the app
 ```bash
 docker run -p 8000:8000 -v %cd%\data:/app/data inventory-management
 ```
