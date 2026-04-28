@@ -45,7 +45,7 @@ mkdir data
 ```
 run the app
 ```bash
-docker run -p 8000:8000 -v %cd%\data:/app/data inventory-management
+docker run -p 8000:8000 -v ./data:/app/data inventory-management
 ```
 Once running open swagger UI
 http://localhost:8000/docs
